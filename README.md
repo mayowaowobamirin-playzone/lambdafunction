@@ -1,10 +1,13 @@
-# lambdafunction
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
-  # KMSKeyId:
-  #   Type: "String"
-  #   Description: The id (final part of the key's ARN) of a KMS key used to encrypt and decrypt your Datadog API amd APP keys.
+   KMSAWSPrincipal:
+     Type: "String"
+     Description: "AWS Principal for KMS".
   DatadogKeys:
+    Type: "String"
+    Description: "The id (final part of the key's ARN) of a KMS key used to encrypt and decrypt your Datadog API amd APP keys."
+
+   DatadogKeys:
     Type: "String"
     Description: "The id (final part of the key's ARN) of a KMS key used to encrypt and decrypt your Datadog API amd APP keys."
   Lambdas3Key:
@@ -28,7 +31,7 @@ Resources:
         - 
           Effect: "Allow"
           Principal: 
-            AWS: !Ref ""
+            AWS: !Ref "KMSAWSPrincipal"
           Action: 
             - "kms:Create*"
             - "kms:Describe*"
