@@ -1,0 +1,66 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "",
+  "Metadata": {},
+  "Parameters": {},
+  "Mappings": {},
+  "Conditions": {},
+  "Resources": {
+    "lambdaDemoRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "lambda_policy_demo",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "*",
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "LambdaDemo": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "welcome.hi",
+        "Role": {
+          "Fn::GetAtt": [
+            "lambdaDemoRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": "javahome-lambda",
+          "S3Key": "welcome.zip"
+        },
+        "Runtime": "python3.6",
+        "Timeout": 25
+      }
+    }
+  },
+  "Outputs": {}
+}
