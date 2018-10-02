@@ -1,13 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
-   KMSAWSPrincipal:
-     Type: "String"
-     Description: "AWS Principal for KMS".
-  DatadogKeys:
+  KMSAWSPrincipal:
+    Type: "String"
+    Description: "AWS Principal for KMS"
+  DatadogflowlogKeys:
     Type: "String"
     Description: "The id (final part of the key's ARN) of a KMS key used to encrypt and decrypt your Datadog API amd APP keys."
 
-   DatadogKeys:
+  DatadogKeys:
     Type: "String"
     Description: "The id (final part of the key's ARN) of a KMS key used to encrypt and decrypt your Datadog API amd APP keys."
   Lambdas3Key:
@@ -20,13 +20,13 @@ Parameters:
     Type: "String"
     Default: "VPCFlowlogs-funtion" 
 Resources:
-  DatadogKeys: 
+  DatadogKMS: 
     Type: AWS::KMS::Key
     Properties: 
-    Description: "kmsEncryptedKeys"
-    KeyPolicy: 
+     Description: "kmsEncryptedKeys"
+     KeyPolicy: 
       Version: "2012-10-17"
-      Id: "Datadog-FlowlogKeys"
+      Id: !Ref "DatadogflowlogKeys"
       Statement: 
         - 
           Effect: "Allow"
@@ -42,7 +42,7 @@ Resources:
             - "kms:Get*"
           Resource: "*"
   vpcflowlambdaddfunction:
-    Type: AWS::Serverless::Function
+    Type: "AWS::Lambda::Function"
     Properties:
       Code: 
        S3Bucket: !Ref "Lambdas3Bucket"
@@ -56,7 +56,7 @@ Resources:
       KmsKeyArn: 
         !Sub
          - 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:key/${keyId}'
-         - {keyId: !Ref Datadog-FlowlogKeys}
+         - {keyId: !Ref DatadogflowlogKeys}
       MemorySize: 128
       Role: !GetAtt "lambdaIAMRole.Arn"
       Runtime: python2.7
@@ -82,7 +82,7 @@ Resources:
                   - "*"
                 Effect: "Allow"
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFunctionName}:*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFuntionName}:*"
           PolicyName: "lambda"
   
     
