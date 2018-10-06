@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Pushes VPC Flow Log metrics to Datadog.
+Parameters:
+  KMSAWSPrincipal:
+    Type: "String"
+    Description: "Aws Principalfor KMS-Key"
+  s3CodeURL:
+    Type: "String"
+    Default: "funtion.zip"
+    Description: "S3 bucket and zipfile path"
+  lambdaFuntionName:
+    Type: "String"
+    Default: "VPCFlowlogs-funtion"
+  LogGroupName:
+    Type: String
+    Description: "The name of the AWS Cloudwatch Log Group to subscribe to" 
+  AwssourceAccount:
+    Type: "String"
+    Default: "Aws account number"
+Resources:
+  DatadogKMS: 
+    Type: AWS::KMS::Key
+    Properties: 
+     Description: "kmsEncryptedKeys"
+     KeyPolicy: 
+      Version: "2012-10-17"
+      Id: "key-default-1"
+      Statement: 
+        - 
+          Sid: "Allow administration of the key"
+          Effect: "Allow"
+          Principal: 
+            AWS: !Ref "KMSAWSPrincipal"
+          Action: 
+            - "kms:*"
+          Resource: "*"
+  vpcflowlambdaddfunction:
+    Description: "lambda function for sending cloudwatch logs to Datadog"
+    Type: "AWS::Serverless::Function"
+    Properties:
+      CodeUri: "s3://vpc-datadog-testing/lambda_function.zip"
+      Environment:
+        Variables:
+          kmsEncryptedKeys: "DatadogKeys"
+      FunctionName: !Ref "lambdaFuntionName"
+      Handler: lambda_function.lambda_handler
+      KmsKeyArn: !GetAtt "DatadogKMS.Arn"
+      MemorySize: 128
+      Role: !GetAtt "lambdaIAMRole.Arn"
+      Runtime: python2.7
+      Timeout: 10
+    Type: AWS::Serverless::Function
+  lambdaIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Action: "kms:Decrypt"   
+                Effect: "Allow"
+                Resource: !GetAtt "DatadogKMS.Arn"   
+          PolicyName: "lambda"
+  SubscriptionFilter: 
+    Type: AWS::Logs::SubscriptionFilter
+    Properties: 
+      LogGroupName: !Ref "LogGroupName"
+      FilterPattern: ""
+      DestinationArn: !GetAtt "vpcflowlambdaddfunction.Arn"
+    DependsOn: LambdaInvokePermission
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt "vpcflowlambdaddfunction.Arn"
+      Principal: "logs.amazonaws.com"
+      Action: "lambda:InvokeFunction"
+      SourceAccount: !Ref "AwssourceAccount"
+     
+    
+
+     
